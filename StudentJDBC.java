@@ -1,83 +1,229 @@
-Program:
-
 import java.sql.*;
 
 public class StudentJDBC {
 
-    static final String URL = "jdbc:mysql://localhost:3306/college";
-    static final String USER = "root";
-    static final String PASSWORD = "root";   // Change if needed
-
     public static void main(String[] args) {
 
+        String url = "jdbc:mysql://localhost:3306/college";
+        String user = "root";
+        String password = "your_password";
+
+        Connection con = null;
+
+        PreparedStatement insert = null;
+        PreparedStatement select = null;
+        PreparedStatement update = null;
+        PreparedStatement delete = null;
+        PreparedStatement display = null;
+
         try {
+
+            // Load MySQL JDBC Driver
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
+            // Establish Database Connection
+            con = DriverManager.getConnection(url, user, password);
 
-            // Insert Records
-            String insert = "INSERT INTO student VALUES(?,?,?,?)";
-            PreparedStatement ps = con.prepareStatement(insert);
+            System.out.println("Database Connected Successfully.");
 
-            ps.setInt(1, 101);
-            ps.setString(2, "Rahul");
-            ps.setString(3, "CSE");
-            ps.setInt(4, 90);
-            ps.executeUpdate();
+            // =================================================
+            // INSERT OPERATION
+            // =================================================
 
-            ps.setInt(1, 102);
-            ps.setString(2, "Sneha");
-            ps.setString(3, "ISE");
-            ps.setInt(4, 91);
-            ps.executeUpdate();
+            String insertQuery =
+                    "INSERT INTO student "
+                    + "(roll_no, name, department, marks) "
+                    + "VALUES (?, ?, ?, ?)";
 
-            System.out.println("Records Inserted Successfully.");
+            insert = con.prepareStatement(insertQuery);
 
-            // Update
-            String update = "UPDATE student SET marks=? WHERE rollno=?";
-            ps = con.prepareStatement(update);
-            ps.setInt(1, 95);
-            ps.setInt(2, 101);
-            ps.executeUpdate();
+            // Insert Student 1
+            insert.setInt(1, 101);
+            insert.setString(2, "Rahul");
+            insert.setString(3, "CSE");
+            insert.setInt(4, 90);
 
-            System.out.println("Record Updated Successfully.");
+            insert.executeUpdate();
 
-            // Search
-            String search = "SELECT * FROM student WHERE rollno=?";
-            ps = con.prepareStatement(search);
-            ps.setInt(1, 101);
+            // Insert Student 2
+            insert.setInt(1, 102);
+            insert.setString(2, "Sneha");
+            insert.setString(3, "ISE");
+            insert.setInt(4, 91);
 
-            ResultSet rs = ps.executeQuery();
+            insert.executeUpdate();
+
+            System.out.println("\nRecords Inserted");
+            System.out.println("Successfully.");
+
+            // =================================================
+            // SELECT / SEARCH OPERATION
+            // =================================================
+
+            String selectQuery =
+                    "SELECT * FROM student WHERE roll_no = ?";
+
+            select = con.prepareStatement(selectQuery);
+
+            // Search student with Roll Number 101
+            select.setInt(1, 101);
+
+            ResultSet rs = select.executeQuery();
 
             System.out.println("\nStudent Details");
-            while (rs.next()) {
-                System.out.println("Roll No : " + rs.getInt("rollno"));
-                System.out.println("Name : " + rs.getString("name"));
-                System.out.println("Department : " + rs.getString("department"));
-                System.out.println("Marks : " + rs.getInt("marks"));
+
+            if (rs.next()) {
+
+                System.out.println("\nRoll No : "
+                        + rs.getInt("roll_no"));
+
+                System.out.println("Name : "
+                        + rs.getString("name"));
+
+                System.out.println("Department : "
+                        + rs.getString("department"));
+
+                System.out.println("Marks : "
+                        + rs.getInt("marks"));
             }
 
-            // Display All Records
-            Statement st = con.createStatement();
-            rs = st.executeQuery("SELECT * FROM student");
+            rs.close();
+
+            // =================================================
+            // UPDATE OPERATION
+            // =================================================
+
+            String updateQuery =
+                    "UPDATE student SET marks = ? "
+                    + "WHERE roll_no = ?";
+
+            update = con.prepareStatement(updateQuery);
+
+            // Update Rahul's marks
+            update.setInt(1, 95);
+            update.setInt(2, 101);
+
+            int updatedRows = update.executeUpdate();
+
+            if (updatedRows > 0) {
+                System.out.println("\nRecord Updated Successfully.");
+            }
+
+            // =================================================
+            // DELETE OPERATION
+            // =================================================
+
+            /*
+             * Delete operation is included here.
+             * It is commented so that the student record
+             * remains available for the final display.
+             */
+
+            String deleteQuery =
+                    "DELETE FROM student WHERE roll_no = ?";
+
+            delete = con.prepareStatement(deleteQuery);
+
+            // Example:
+            // delete.setInt(1, 102);
+            // delete.executeUpdate();
+
+            // System.out.println("\nRecord Deleted Successfully.");
+
+            // =================================================
+            // DISPLAY ALL STUDENT RECORDS
+            // =================================================
+
+            String displayQuery =
+                    "SELECT * FROM student";
+
+            display = con.prepareStatement(displayQuery);
+
+            ResultSet result = display.executeQuery();
 
             System.out.println("\nStudent Records");
-            System.out.println("--------------------------------------");
-            System.out.println("Roll\tName\tDepartment\tMarks");
-            System.out.println("--------------------------------------");
 
-            while (rs.next()) {
+            System.out.println("----------------------------------------");
+
+            System.out.println(
+                    "Roll\tName\tDepartment\tMarks"
+            );
+
+            System.out.println("----------------------------------------");
+
+            while (result.next()) {
+
                 System.out.println(
-                        rs.getInt("rollno") + "\t" +
-                        rs.getString("name") + "\t" +
-                        rs.getString("department") + "\t\t" +
-                        rs.getInt("marks"));
+                        result.getInt("roll_no")
+                        + "\t"
+                        + result.getString("name")
+                        + "\t"
+                        + result.getString("department")
+                        + "\t\t"
+                        + result.getInt("marks")
+                );
             }
 
-            con.close();
+            System.out.println("----------------------------------------");
 
-        } catch (Exception e) {
-            System.out.println(e);
+            result.close();
+
+        }
+
+        catch (ClassNotFoundException e) {
+
+            System.out.println(
+                    "MySQL JDBC Driver not found."
+            );
+
+            e.printStackTrace();
+        }
+
+        catch (SQLException e) {
+
+            System.out.println(
+                    "Database Error."
+            );
+
+            e.printStackTrace();
+        }
+
+        finally {
+
+            try {
+
+                // Close PreparedStatements
+
+                if (insert != null)
+                    insert.close();
+
+                if (select != null)
+                    select.close();
+
+                if (update != null)
+                    update.close();
+
+                if (delete != null)
+                    delete.close();
+
+                if (display != null)
+                    display.close();
+
+                // Close Connection
+
+                if (con != null)
+                    con.close();
+
+                System.out.println(
+                        "\nDatabase Connection Closed."
+                );
+
+            }
+
+            catch (SQLException e) {
+
+                e.printStackTrace();
+            }
         }
     }
 }
